@@ -1,5 +1,4 @@
 import ExchangeRates from "@/components/ExchangeRate";
-import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
