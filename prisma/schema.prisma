@@ -1,0 +1,19 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Bank {
+  id           Int       @id @default(autoincrement())
+  bank_name    String
+  buying_rate  Float
+  selling_rate Float
+  logo_url     String
+  created_at   DateTime  @default(now())
+  updated_at   DateTime? @updatedAt
+}

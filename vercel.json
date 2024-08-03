@@ -1,0 +1,11 @@
+{
+  "builds": [
+    {
+      "src": "prisma/schema.prisma",
+      "use": "@vercel/node"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "node ./node_modules/.bin/prisma generate"
+  }
+}
