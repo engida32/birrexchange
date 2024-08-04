@@ -12,6 +12,11 @@ import { fetchFromCache, setToCache } from './cache';
  * @returns {Promise<ExchangeRate[]>} - List of exchange rates
  */
 export async function scrapeAndWriteToDB(): Promise<BankExchangeRate[]> {
+    // check if the db is connected
+    if (!prisma) {
+        console.log('Prisma is not connected');
+        return [];
+    }
     const forExURL = process.env.FOREX_URL as string;
     try {
         const {data: forExHTML} = await axios.get(forExURL);
@@ -131,8 +136,16 @@ export async function getAllExchangeRates(): Promise<ExchangeRateResponse | null
     for (const currency of currencyNames) {
         const bankRates = await prisma.bankExchangeRate.findMany({
             where: {
-                currency_name: currency.currency_name
-            }
+                currency_name: currency.currency_name,
+                OR: [
+                    {is_last_rate: true},
+                    {is_latest_rate: true}
+                ]
+            },
+            orderBy: {
+                bank_name: 'asc'
+            },
+            distinct: ['bank_name']
         });
 
         const banks: BankExchangeRateLatestAndLast[] = [];
