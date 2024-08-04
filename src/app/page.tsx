@@ -1,19 +1,6 @@
-import { NextPage } from 'next'
-// import { getAllExchangeRates } from '@/libs'
-// import { ExchangeRateResponse } from '@/types'
-
-const Card: NextPage = () => {
+export default async function Page() {
     return (
-        <div>
-            <h1>Exchange Rates</h1>
-        </div>
-    )
+        <div>page</div>
+      )
 }
 
-export async function Page() {
-    // Example of fetching data from the server
-    // const rates = await getAllExchangeRates();
-    return <Card />
-}
-
-export default Page
