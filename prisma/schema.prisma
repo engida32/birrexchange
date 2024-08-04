@@ -8,12 +8,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Bank {
+model BankExchangeRate {
   id           Int       @id @default(autoincrement())
   bank_name    String
-  buying_rate  Float
-  selling_rate Float
-  logo_url     String
+  buying_price  Float
+  selling_price Float
+  bank_logo     String
+  currency_name String
+  created_at   DateTime  @default(now())
+  updated_at   DateTime? @updatedAt
+}
+
+model BinanceExchangeRate { 
+  id           Int       @id @default(autoincrement())
+  buying_price  Float
+  selling_price Float
+  currency_name String
   created_at   DateTime  @default(now())
   updated_at   DateTime? @updatedAt
 }

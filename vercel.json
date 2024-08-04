@@ -5,7 +5,10 @@
       "use": "@vercel/node"
     }
   ],
-  "scripts": {
-    "postdeploy": "node ./node_modules/.bin/prisma generate"
-  }
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 9,21 * * *"
+    }
+  ]
 }
