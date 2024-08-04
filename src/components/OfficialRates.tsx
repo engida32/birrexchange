@@ -67,7 +67,7 @@ const OfficialRates: React.FC<{ currencyData: CurrencyData }> = ({
                         src={rate.icon}
                         alt={`${rate.bank} icon`}
                         // layout="fill"
-                        objectFit="contain"
+                        //objectFit="contain"
                         className="rounded-full"
                       />
                     </div>
