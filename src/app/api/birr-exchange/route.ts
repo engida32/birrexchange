@@ -3,7 +3,7 @@ import { getAllExchangeRates, scrapeAndWriteToDB } from '@/libs';
 
 export async function GET(req: NextRequest, res: NextResponse) {
     const rates = await getAllExchangeRates();
-    if (rates.banks.length === 0) {
+    if (!rates) {
         await scrapeAndWriteToDB();
     }
     return NextResponse.json({ rates })

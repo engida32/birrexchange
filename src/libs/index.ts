@@ -112,7 +112,7 @@ export async function scrapeAndWriteToDB(): Promise<BankExchangeRate[]> {
  * Get all exchange rates
  * @returns {Promise<ExchangeRate[]>} - List of exchange rates
  */
-export async function getAllExchangeRates(): Promise<ExchangeRateResponse> {
+export async function getAllExchangeRates(): Promise<ExchangeRateResponse | null> {
    try { 
     
     // fetch from cache if available
@@ -229,9 +229,6 @@ export async function getAllExchangeRates(): Promise<ExchangeRateResponse> {
         binance: binanceResponse
     }
    } catch (error) {
-    return {
-        banks: [],
-        binance: []
-    }
+    return null
    }
 }
