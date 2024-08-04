@@ -224,8 +224,6 @@ const ExchangeRates = () => {
       ? officialRates.find((currency) => currency.name === selectedCurrency)
       : blackMarketRates.find((currency) => currency.name === selectedCurrency);
 
-  console.log("selectedCurrencyData", selectedCurrencyData);
-
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg max-w-lg w-full">
       <div className="flex justify-between items-center mb-6">
@@ -279,9 +277,11 @@ const ExchangeRates = () => {
         </div>
       </div>
       {selectedTab === "official" ? (
-        <OfficialRates currencyData={selectedCurrencyData} />
+        <OfficialRates currencyData={selectedCurrencyData as CurrencyData} />
       ) : (
-        <BlackMarketRates currencyData={selectedCurrencyData} />
+        <BlackMarketRates
+          currencyData={selectedCurrencyData as BlackMarketRateType}
+        />
       )}
     </div>
   );
