@@ -14,7 +14,9 @@ model BankExchangeRate {
   buying_price  Float
   selling_price Float
   bank_logo     String
-  currency_name String
+  currency_name String 
+  is_latest_rate Boolean   @default(false)
+  is_last_rate Boolean   @default(false)
   created_at   DateTime  @default(now())
   updated_at   DateTime? @updatedAt
 }
@@ -24,6 +26,8 @@ model BinanceExchangeRate {
   buying_price  Float
   selling_price Float
   currency_name String
+  is_latest_rate Boolean
+  is_last_rate Boolean
   created_at   DateTime  @default(now())
   updated_at   DateTime? @updatedAt
 }

@@ -1,29 +1,19 @@
 import { NextPage } from 'next'
 import { getAllExchangeRates } from '@/libs'
-import { BankExchangeRateResponse } from '@/types'
+import { ExchangeRateResponse } from '@/types'
 
-const Card: NextPage<{ rates: BankExchangeRateResponse }> = ({ rates }) => {
-    const banks = rates.rates;
+const Card: NextPage<{ rates: ExchangeRateResponse }> = ({ rates }) => {
     return (
         <div>
             <h1>Exchange Rates</h1>
-            <ul>
-                {banks.map((rate, index) => (
-                    <li key={index}>
-                        <h2>{rate.currency_name}</h2>
-                        <p>Bank: {rate.bank_name}</p>
-                        <p>Buying Price: {rate.buying_price}</p>
-                        <p>Selling Price: {rate.selling_price}</p>
-                    </li>
-                ))}
-            </ul>
         </div>
     )
 }
 
 export async function Page() {
+    // Example of fetching data from the server
     const rates = await getAllExchangeRates();
-    return <Card rates={rates.banks} />
+    return <Card rates={rates} />
 }
 
 export default Page
