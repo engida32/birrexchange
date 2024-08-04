@@ -8,3 +8,14 @@ export const SELECTORS = {
     CURRENCY_BANK_BUYING: '.currency_bank_buying',
     CURRENCY_BANK_SELLING: '.currency_bank_selling'
 } as const;
+
+
+// time range for the bank exchange rate history
+export const TIME_RANGES = {
+    '1D': '1 Day',
+    '1W': '1 Week',
+    '1M': '1 Month',
+    '3M': '3 Months',
+    '6M': '6 Months',
+    '1Y': '1 Year'
+} 

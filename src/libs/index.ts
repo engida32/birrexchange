@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import axios from 'axios';
-import { SELECTORS } from '@/utils/constants';
-import { BankExchangeRate, BankExchangeRateResponse, ExchangeRateResponse,  BankExchangeRateLatestAndLast, BinanceExchangeRateResponse} from '@/types';
+import { SELECTORS, TIME_RANGES } from '@/utils/constants';
+import { BankExchangeRate, BankExchangeRateResponse, ExchangeRateResponse,  BankExchangeRateLatestAndLast, BinanceExchangeRateResponse, BankExchangeRateHistoryResponse} from '@/types';
 import prisma from './prisma';
 import { fetchFromCache, setToCache } from './cache';
 
@@ -244,4 +244,70 @@ export async function getAllExchangeRates(): Promise<ExchangeRateResponse | null
    } catch (error) {
     return null
    }
+}
+
+/**
+ * Get exchange rate history by currency name
+ * by time range of [week, month, year]
+ */
+export async function getExchangeRateHistory(currency_name: string, time_range: string): Promise<BankExchangeRateHistoryResponse | null > {
+        try {
+            if (!TIME_RANGES[time_range as keyof typeof TIME_RANGES] || !currency_name) {
+                throw new Error('Invalid time range or currency name');
+            }
+
+            const now = new Date();
+            let startDate = new Date();
+            switch (time_range) {
+                case '1D':
+                    startDate.setDate(now.getDate() - 1);
+                    break;
+                case '1W':
+                    startDate.setDate(now.getDate() - 7);
+                    break;
+                case '1M':
+                    startDate.setMonth(now.getMonth() - 1);
+                    break;
+                case '3M':
+                    startDate.setMonth(now.getMonth() - 3);
+                    break;
+                case '6M':
+                    startDate.setMonth(now.getMonth() - 6);
+                    break;
+                case '1Y':
+                    startDate.setFullYear(now.getFullYear() - 1);
+                    break;
+                default:
+                    startDate.setDate(now.getDate() - 1);
+                    break;
+            }
+
+            const cacheKey = 'exchange_rate_history_' + currency_name + '_' + time_range;
+            const cacheData = fetchFromCache(cacheKey);
+            if (cacheData) return cacheData
+
+            const history = await prisma.bankExchangeRate.findMany({
+                where: {
+                    currency_name: currency_name,
+                    created_at: {
+                        gte: startDate,
+                        lte: now
+                    }
+                },
+                orderBy: {
+                    created_at: 'asc'
+                }
+            });
+            const response = {
+                time_range: TIME_RANGES[time_range as keyof typeof TIME_RANGES],
+                rates: history
+           }
+            const duration = 6 * 60 * 60 * 1000;
+            setToCache(cacheKey, response , duration);
+
+           return response
+        } catch (error) {
+            console.log('Error: ', error);
+            return null 
+        }
 }

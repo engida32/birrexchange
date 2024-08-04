@@ -39,3 +39,8 @@ export interface BankRatesResponse {
     buying_price: number;
     selling_price: number;
 }
+
+export interface BankExchangeRateHistoryResponse {
+    time_range: string;
+    rates: BankExchangeRate[]
+}
