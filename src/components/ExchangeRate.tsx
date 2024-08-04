@@ -227,7 +227,7 @@ const ExchangeRates = () => {
   console.log("selectedCurrencyData", selectedCurrencyData);
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-lg max-w-md w-full">
+    <div className="p-6 bg-white rounded-lg shadow-lg max-w-lg w-full">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Exchange Rates</h1>
         <button className="p-2 rounded-full hover:bg-gray-200 w-10 h-10 flex items-center justify-center">
