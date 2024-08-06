@@ -10,12 +10,19 @@ export interface BankExchangeRate {
 
 export interface BinanceExchangeRate {
     buying_price: number;
-    selling_price: number;
+    currency_name: string;
+    is_last_rate: boolean;
+    is_latest_rate: boolean;
+}
+
+export interface BinanceRateResponse {
+    buying_price: number;
 }
 
 export interface BinanceExchangeRateResponse {
     currency_name: string;
-    rates: BinanceExchangeRate[]
+    currency_logo: string;
+    rates: BinanceRateResponse[]
 }
 export interface ExchangeRateResponse {
     banks: BankExchangeRateResponse[],
