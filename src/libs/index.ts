@@ -1,9 +1,10 @@
 import * as cheerio from 'cheerio';
 import axios from 'axios';
-import { BINANCE_BODY, BINANCE_HEADER, SELECTORS, TIME_RANGES } from '@/utils/constants';
-import { BankExchangeRate, BankExchangeRateResponse, ExchangeRateResponse,  BankExchangeRateLatestAndLast, BinanceExchangeRateResponse, BankExchangeRateHistoryResponse, BinanceExchangeRate} from '@/types';
+import { SELECTORS, TIME_RANGES } from '@/utils/constants';
+import { BankExchangeRate, BankExchangeRateResponse, ExchangeRateResponse,  BankExchangeRateLatestAndLast, BinanceExchangeRateResponse, BankExchangeRateHistoryResponse, BinanceExchangeRate, ExchangeRateHistoryResponse} from '@/types';
 import prisma from './prisma';
 import { fetchFromCache, setToCache } from './cache';
+import { p2pAverageSellingAndBuyingPrice } from '@/utils/promise-pools';
 
 
 /**
@@ -18,7 +19,7 @@ export async function scrapeAndWriteToDB(): Promise<BankExchangeRate[]> {
         return [];
     }
     const forExURL = process.env.FOREX_URL as string;
-    const binanceURL = process.env.BINANCE_URL as string;
+
     try {
         const {data: forExHTML} = await axios.get(forExURL);
         const $ = cheerio.load(forExHTML);
@@ -51,22 +52,10 @@ export async function scrapeAndWriteToDB(): Promise<BankExchangeRate[]> {
 
         // Binance find the best rate for USDT
         const binanceData:BinanceExchangeRate[] = []
-        const json = await fetch(binanceURL, {
-            method: 'POST',
-            headers: BINANCE_HEADER,
-            body: JSON.stringify(BINANCE_BODY)
-        })
-        
-        const binanceRates = await json.json();
-
-        // add the average rate to the binanceData
-        let total: number = 0;
-        binanceRates.data.forEach((rate: any) => {
-            total += Number(rate.adv.price);;
-        });
-        const averageRate = total / binanceRates.data.length;
+        const [averageBuyingPrice, averageSellingPrice] = await p2pAverageSellingAndBuyingPrice();
         binanceData.push({
-            buying_price: Number(averageRate),
+            buying_price: averageBuyingPrice,
+            selling_price: averageSellingPrice,
             currency_name: 'USD',
             is_last_rate: false,
             is_latest_rate: true
@@ -164,6 +153,7 @@ export async function scrapeAndWriteToDB(): Promise<BankExchangeRate[]> {
             await prisma.binanceExchangeRate.create({
                 data: {
                     buying_price: rate.buying_price,
+                    selling_price: rate.selling_price,
                     currency_name: rate.currency_name,
                     is_last_rate: rate.is_last_rate,
                     is_latest_rate: rate.is_latest_rate
@@ -281,10 +271,12 @@ export async function getAllExchangeRates(): Promise<ExchangeRateResponse | null
         currency_logo: "USD".toLowerCase() + '.png',
         rates: [
             {
-                buying_price: lastBinanceRates?.buying_price as number
+                buying_price: lastBinanceRates?.buying_price as number,
+                selling_price: lastBinanceRates?.selling_price as number
             },
             {
-                buying_price: latestBinanceRates?.buying_price as number
+                buying_price: latestBinanceRates?.buying_price as number,
+                selling_price: latestBinanceRates?.selling_price as number
             }
         ]
     });
@@ -308,7 +300,7 @@ export async function getAllExchangeRates(): Promise<ExchangeRateResponse | null
  * Get exchange rate history by currency name
  * by time range of [week, month, year]
  */
-export async function getExchangeRateHistory(currency_name: string, time_range: string): Promise<BankExchangeRateHistoryResponse | null > {
+export async function getExchangeRateHistory(currency_name: string, time_range: string): Promise<ExchangeRateHistoryResponse | null > {
     try {
         if (!TIME_RANGES[time_range as keyof typeof TIME_RANGES] || !currency_name) {
             throw new Error('Invalid time range or currency name');
@@ -344,7 +336,23 @@ export async function getExchangeRateHistory(currency_name: string, time_range: 
         const cacheData = fetchFromCache(cacheKey);
         if (cacheData) return cacheData
 
-        const history = await prisma.bankExchangeRate.findMany({
+        // banks exchange rate history
+        const bankRates = await prisma.bankExchangeRate.findMany({
+            where: {
+                currency_name: currency_name,
+                created_at: {
+                    gte: startDate,
+                    lte: now
+                }
+            },
+            orderBy: {
+                bank_name: 'asc'
+            },
+            distinct: ['created_at']
+        });
+
+        // binance exchange rate history
+        const binanceRates = await prisma.binanceExchangeRate.findMany({
             where: {
                 currency_name: currency_name,
                 created_at: {
@@ -354,11 +362,62 @@ export async function getExchangeRateHistory(currency_name: string, time_range: 
             },
             orderBy: {
                 created_at: 'asc'
-            }
+            },
+            distinct: ['created_at']
         });
-        const response = {
-            time_range: TIME_RANGES[time_range as keyof typeof TIME_RANGES],
-            rates: history
+
+        let bankRatesResponse: BankExchangeRateResponse = {
+            currency_name: currency_name,
+            currency_logo: currency_name.toLowerCase() + '.png',
+            rates: []
+        }
+        let binanceRatesResponse: BinanceExchangeRateResponse= {
+            currency_name: currency_name,
+            currency_logo: currency_name.toLowerCase() + '.png',
+            rates: []
+        }
+
+        // format the bank rates
+        bankRates.reduce((acc, rate) => {
+            const bank = acc.find(bank => bank.bank_name === rate.bank_name);
+            if (bank) {
+                bank.rates.push({
+                    buying_price: rate.buying_price,
+                    selling_price: rate.selling_price,
+                    created_at: rate.created_at
+                });
+            } else {
+                acc.push({
+                    bank_name: rate.bank_name,
+                    bank_logo: rate.bank_logo,
+                    rates: [
+                        {
+                            buying_price: rate.buying_price,
+                            selling_price: rate.selling_price,
+                            created_at: rate.created_at
+                        }
+                    ]
+                });
+            }
+            return acc;
+        }, bankRatesResponse.rates);
+
+        // format the binance rates
+        binanceRates.reduce((acc, rate) => {
+            acc.push({
+                buying_price: rate.buying_price,
+                selling_price: rate.selling_price,
+                created_at: rate.created_at
+            });
+            return acc;
+        }, binanceRatesResponse.rates);
+
+        const response: ExchangeRateHistoryResponse = {
+            time_range: time_range,
+            rates: {
+                banks: bankRatesResponse,
+                binance: binanceRatesResponse
+            }
         }
         const duration = 6 * 60 * 60 * 1000;
         setToCache(cacheKey, response , duration);

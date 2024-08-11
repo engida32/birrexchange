@@ -10,6 +10,7 @@ export interface BankExchangeRate {
 
 export interface BinanceExchangeRate {
     buying_price: number;
+    selling_price: number
     currency_name: string;
     is_last_rate: boolean;
     is_latest_rate: boolean;
@@ -17,6 +18,8 @@ export interface BinanceExchangeRate {
 
 export interface BinanceRateResponse {
     buying_price: number;
+    selling_price: number;
+    created_at?: Date;
 }
 
 export interface BinanceExchangeRateResponse {
@@ -29,6 +32,13 @@ export interface ExchangeRateResponse {
     binance: BinanceExchangeRateResponse[]
 }
 
+export interface ExchangeRateHistoryResponse {
+    time_range: string;
+    rates: {
+        banks: BankExchangeRateResponse,
+        binance: BinanceExchangeRateResponse
+    }
+}
 
 export interface BankExchangeRateResponse {
     currency_name: string;
@@ -45,6 +55,7 @@ export interface BankExchangeRateLatestAndLast {
 export interface BankRatesResponse {
     buying_price: number;
     selling_price: number;
+    created_at?: Date;
 }
 
 export interface BankExchangeRateHistoryResponse {

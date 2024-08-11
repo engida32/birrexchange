@@ -23,6 +23,7 @@ model BankExchangeRate {
 model BinanceExchangeRate { 
   id           Int       @id @default(autoincrement())
   buying_price  Float
+  selling_price Float
   currency_name String
   is_latest_rate Boolean
   is_last_rate Boolean
